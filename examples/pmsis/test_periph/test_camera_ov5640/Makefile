@@ -7,6 +7,10 @@ APP_LDFLAGS += -g -lgaplib
 #APP_CFLAGS += -DDEBUG
 #APP_CFLAGS += -DJPEG
 
+ifeq ($(BOARD_NAME), gapuino)
+APP_CFLAGS      += -DHIMAX
+endif
+
 override config_args += --config-opt=camera/image-stream=$(CURDIR)/imgTest0.pgm
 override config_args += --config-opt=runner/peripherals=true
 

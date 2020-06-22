@@ -10,5 +10,9 @@ RUNNER_CONFIG = $(CURDIR)/config.ini
 
 # Give camera input image to GVSOC model. It is also possible to specify img%d.pgm to give a set of images
 override config_args += --config-opt=camera/image-stream=$(CURDIR)/Lena.pgm
+override config_args += --config-opt=runner/peripherals=true
+
 
 include $(RULES_DIR)/pmsis_rules.mk
+#include $(RULES_DIR)/pulp_rt.mk
+#include ~/gap_sdk/tools/rules/pulp_rt.mk

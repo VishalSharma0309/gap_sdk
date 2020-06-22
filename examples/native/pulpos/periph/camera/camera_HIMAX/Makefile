@@ -10,4 +10,9 @@ PULP_CFLAGS = -O3 -g -DGVSOC
 
 PLPBRIDGE_FLAGS += -s camera@test.py
 
+override CONFIG_OPT += camera=himax system/camera/image-stream=$(CURDIR)/imgTest0.pgm
+#override config_args += --config-opt=runner/peripherals=false
+
 include $(INSTALL_DIR)/rules/pulp_rules.mk
+#include $(INSTALL_DIR)/rules/pulp_rt.mk
+

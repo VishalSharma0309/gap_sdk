@@ -4,6 +4,10 @@ PULP_APP_HOST_SRCS = test.c
 PULP_CFLAGS = -O3 -g
 PLPBRIDGE_FLAGS += -fileIO
 
+
+#override config_args += --config-opt=camera/image-stream=$(CURDIR)/Pedestrian.ppm
+
+
 clean::
 	rm -rf Pedestrian_OUT.ppm
 

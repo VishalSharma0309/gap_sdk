@@ -26,6 +26,10 @@ APP_LDFLAGS +=  -flto -Wl,--gc-sections
 # in a clean way.
 APP_CFLAGS += -Wall -Werror -Wno-maybe-uninitialized -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable -Wno-unused-function -Wundef
 
+#override config_args += --config-opt=camera/image-stream=$(CURDIR)/testImg.ppm
+#override config_args += --config-opt=display/enabled=true
+
+
 clean::
 	rm -rf img_OUT.ppm
 

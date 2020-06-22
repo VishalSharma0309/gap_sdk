@@ -10,4 +10,6 @@ PULP_CFLAGS = -O2 -g
 
 PLPBRIDGE_FLAGS += -s camera@test.py
 
+override CONFIG_OPT += camera=ov7670 system/camera/image=$(CURDIR)/frame0.img
+
 include $(GAP_SDK_HOME)/tools/rules/pulp_rules.mk

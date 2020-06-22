@@ -238,11 +238,11 @@ static int test_entry()
 
     remaining_size = BUFF_SIZE;
     nb_transfers = 0;
-    nb_hyper_transfers = 0;
+    int nb_hyper_transfers = 0;
     current_buff = 0;
     current_task = 0;
     saved_size = 0;
-    total_hyper_transfers = 0;
+    int total_hyper_transfers = 0;
     done = 0;
 
     char name[25];

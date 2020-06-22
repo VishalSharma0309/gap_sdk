@@ -88,7 +88,7 @@ static void CreatePPMHeader(unsigned char *ImgOut, ImgDescriptor *ImgOutHeader, 
 
 static void cam_param_conf(rt_cam_conf_t *conf){
   conf->resolution = QVGA;
-  conf->format = OV7670_MONO_COLOR;
+  conf->format = OV7675_MONO_COLOR;
   conf->fps = fps30;
   conf->slice_en = DISABLE;
   conf->shift = 0;

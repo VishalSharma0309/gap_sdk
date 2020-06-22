@@ -22,15 +22,24 @@ void test_gpio(void)
 {
     int32_t errors = 0;
     uint32_t value = 0;
+    
     struct pi_gpio_conf gpio_conf = {0};
+    // struct pi_gpio_conf { pi_device_e device (type of interface); int32_t port (GPIO port number)}
+    
     pi_gpio_conf_init(&gpio_conf);
+    // gpio_conf is a pointer to the GPIO configuration
+
     pi_open_from_conf(&gpio, &gpio_conf);
+    
     errors = pi_gpio_open(&gpio);
+    // gpio: A pointer to the device structure of the device to open
+
     if (errors)
     {
         printf("Error opening GPIO %d\n", errors);
         pmsis_exit(errors);
     }
+    
     pi_task_t cb_gpio = {0};
 
     pi_gpio_e gpio_in = PI_GPIO_A0_PAD_12_A3;
@@ -40,7 +49,10 @@ void test_gpio(void)
     pi_task_callback(&cb_gpio, __pi_cb_gpio, (void *) gpio_in);
     /* Configure gpio input. */
     pi_gpio_pin_configure(&gpio, gpio_in, cfg_flags);
+    
+    // reading from the pin
     value = pi_gpio_pin_read(&gpio, gpio_in, &value);
+
     printf("GPIO opened, in val: %d\n", value);
     pi_gpio_pin_task_add(&gpio, gpio_in, &cb_gpio, irq_type);
     pi_gpio_pin_notif_configure(&gpio, gpio_in, irq_type);
@@ -51,6 +63,7 @@ void test_gpio(void)
         printf("GPIO %d in: %d\n", gpio_in & 0xFF, value);
         pi_time_wait_us(1000000);
         value = pi_gpio_pin_read(&gpio, gpio_in, &value);
+        //value = 1;
         printf("GPIO %d in: %d\n", gpio_in & 0xFF, value);
         pi_time_wait_us(1000000);
     }
