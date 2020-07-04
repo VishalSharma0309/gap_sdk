@@ -59,10 +59,15 @@ void test_gpio(void)
 
     while (1)
     {
+        //value=1;
+        //value = pi_gpio_pin_write(&gpio, gpio_in, value);
+        
         value = pi_gpio_pin_read(&gpio, gpio_in, &value);
         printf("GPIO %d in: %d\n", gpio_in & 0xFF, value);
         pi_time_wait_us(1000000);
         value = pi_gpio_pin_read(&gpio, gpio_in, &value);
+        
+        
         //value = 1;
         printf("GPIO %d in: %d\n", gpio_in & 0xFF, value);
         pi_time_wait_us(1000000);

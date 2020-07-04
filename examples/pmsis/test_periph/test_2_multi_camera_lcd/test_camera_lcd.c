@@ -15,6 +15,7 @@
 
 #define ASYNC
 
+
 static pi_task_t task;
 static uint8_t *imgBuff0;
 
@@ -226,6 +227,7 @@ void test_camera_with_lcd(void)
         
         // for cam 0
         #if defined(ASYNC)
+        printf("ASYNC camera 0\n");
         pi_camera_control(&cam, PI_CAMERA_CMD_STOP, 0);
         printf("Camera 0 stop.\n");
         pi_task_callback(&task, cam_handler, NULL);
@@ -254,6 +256,7 @@ void test_camera_with_lcd(void)
 
         // for cam 1
         #if defined(ASYNC)
+        printf("ASYNC camera 1 \n");
         pi_camera_control(&cam1, PI_CAMERA_CMD_STOP, 0);
         printf("Camera 1 stop.\n");
         pi_task_callback(&task, cam_handler, NULL);

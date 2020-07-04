@@ -24,7 +24,7 @@ FACE_DET_MODEL_GEN_C = $(addsuffix .c, $(FACE_DET_MODEL_GEN))
 FACE_DET_MODEL_GEN_CLEAN = $(FACE_DET_MODEL_GEN_C) $(addsuffix .h, $(FACE_DET_MODEL_GEN))
 FACE_DET_SRCS +=  main.c faceDet.c FaceDetBasicKernels.c ImageDraw.c $(FACE_DET_MODEL_GEN_C)
 
-override config_args += --config-opt=camera/image-stream=$(CURDIR)/imgTest0.pgm
+
 
 APP_SRCS += $(FACE_DET_SRCS)
 APP_INC  += $(TILER_INC)
@@ -51,6 +51,8 @@ ifeq '$(BOARD_NAME)' 'gapoc_a'
 PLPBRIDGE_FLAGS += -ftdi
 APP_CFLAGS += -DGAPOC_A
 endif
+
+override config_args += --config-opt=camera/image-stream=$(CURDIR)/imgTest0.pgm
 
 #PLPBRIDGE_FLAGS += -jtag
 

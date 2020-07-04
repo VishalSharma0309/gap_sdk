@@ -16,6 +16,7 @@
 
 
 #include <stdio.h>
+#include <string.h>
 
 /* PMSIS includes. */
 #include "pmsis.h"
@@ -40,8 +41,8 @@
 #ifdef FROM_FILE
 // If you want to use a local image, please specify the imgae size below:
 #define ISRGB 0
-#define LINE 240
-#define COL 320
+#define LINE 244
+#define COL 324
 
 #if ( (COL%4!=0) || (LINE%4!=0))
     #error LINE and COL of input image must be multiple of four!
@@ -53,6 +54,8 @@ PI_L2 unsigned char *ImageIn_L2;
 #include "Mills.h"
 #endif
 unsigned char PI_L2 *ImageOut_L2;
+
+static uint32_t idx = 0;
 
 
 typedef struct ArgImage {
@@ -662,57 +665,63 @@ void canny_edge_detector()
 
 #if FROM_FILE
 
-	char *Imagefile = "Pedestrian.pgm";
-	char imageName[64];
-	sprintf(imageName, "../../../%s", Imagefile);
-	ImageIn_L2 = (unsigned char *) pi_l2_malloc( COL*LINE*sizeof(unsigned char));
+    while (1){
+        
+        
+        char imageName[64];
+        sprintf(imageName, "../../../dataset/%ld.pgm", idx);
+        ImageIn_L2 = (unsigned char *) pi_l2_malloc( COL*LINE*sizeof(unsigned char));
 
-    if (ReadImageFromFile(imageName, COL,LINE, 1, ImageIn_L2, LINE*COL*sizeof(unsigned char), 0, 0))
-    {
-        printf("Failed to load image %s\n", imageName);
-        pmsis_exit(-1);
-    }
+        if (ReadImageFromFile(imageName, COL,LINE, 1, ImageIn_L2, LINE*COL*sizeof(unsigned char), 0, 0))
+        {
+            printf("Failed to load image %s\n", imageName);
+            pmsis_exit(-1);
+        }
+        
 
-#endif
+    #endif
 
-    // Activate the Cluster
-    struct pi_device cluster_dev;
-    struct pi_cluster_conf cl_conf;
-    cl_conf.id = 0;
-    pi_open_from_conf(&cluster_dev, (void *) &cl_conf);
-    if (pi_cluster_open(&cluster_dev))
-    {
-        printf("Cluster open failed !\n");
-        pmsis_exit(-1);
-    }
+        // Activate the Cluster
+        struct pi_device cluster_dev;
+        struct pi_cluster_conf cl_conf;
+        cl_conf.id = 0;
+        pi_open_from_conf(&cluster_dev, (void *) &cl_conf);
+        if (pi_cluster_open(&cluster_dev))
+        {
+            printf("Cluster open failed !\n");
+            pmsis_exit(-1);
+        }
 
-    // Allocate a big buffer in L1 for the algorithm usage.
-    WorkingArea 	  = pi_l1_malloc(0, ALLOCATED_MEM) ;
-    if(WorkingArea == NULL) {
-        printf("WorkingArea alloc error\n");
-        pmsis_exit(-1);
-    }
+        // try using for malloc2
+        // Allocate a big buffer in L1 for the algorithm usage.
+        WorkingArea 	  = pi_l1_malloc(0, ALLOCATED_MEM) ;
+        if(WorkingArea == NULL) {
+            printf("WorkingArea alloc error\n");
+            pmsis_exit(-1);
+        }
 
-    // Allocate the buffer for the output image.
-    ImageOut_L2 = pi_l2_malloc((LINE*COL));
+        // Allocate the buffer for the output image.
+        ImageOut_L2 = pi_l2_malloc((LINE*COL));
 
-    printf ("Call cluster\n");
-    struct pi_cluster_task *task = pmsis_l2_malloc(sizeof(struct pi_cluster_task));
-    memset(task, 0, sizeof(struct pi_cluster_task));
-    task->entry = cluster_main;
-    task->arg = (void *) NULL;
-    task->stack_size = (uint32_t) STACK_SIZE;
+        printf ("Call cluster\n");
+        struct pi_cluster_task *task = pmsis_l2_malloc(sizeof(struct pi_cluster_task));
+        memset(task, 0, sizeof(struct pi_cluster_task));
+        task->entry = cluster_main;
+        task->arg = (void *) NULL;
+        task->stack_size = (uint32_t) STACK_SIZE;
 
-    //Synchronous call to Cluster, Execution will start only on PE0
-    pi_cluster_send_task_to_cl(&cluster_dev, task);
+        //Synchronous call to Cluster, Execution will start only on PE0
+        pi_cluster_send_task_to_cl(&cluster_dev, task);
 
-    char imgName[50];
-    sprintf(imgName, "../../../img_OUT.ppm");
-    printf("imgName: %s\n", imgName);
-    WriteImageToFile(imgName, COL, LINE, 1, (ImageOut_L2), sizeof(unsigned char));
+        char imgName[50];
+        sprintf(imgName, "../../../img_OUT_%ld.ppm", idx);
+        printf("imgName: %s\n", imgName);
+        WriteImageToFile(imgName, COL, LINE, 1, (ImageOut_L2), sizeof(unsigned char));
 
-    pi_cluster_close(&cluster_dev);
-    
+        pi_cluster_close(&cluster_dev);
+        idx++;
+        //imgNum = imgNum + 1;
+    }  
     pmsis_exit(0);
  
  }
