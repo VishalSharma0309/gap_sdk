@@ -627,10 +627,11 @@ static void cluster_main()
     int W=COL, H=LINE;
     
     // Configure performance counters for counting the cycles
-    pi_perf_conf(1 << PI_PERF_ACTIVE_CYCLES);
+    //pi_perf_conf(1 << PI_PERF_ACTIVE_CYCLES);
     
-    if (CoreCountDynamic) {
+    //if (CoreCountDynamic) {
         /* Here the canny edge would be executed on 1, 2, 4 and 8 cores*/
+        /*
         int i;
         for (i=0; i<4; i++) {
             // In these 4 loops, we will active 1, 2, 4 and 8 cores for the next processing steps.
@@ -645,6 +646,7 @@ static void cluster_main()
             MasterCannyDetector(W, H);
         }
     } else {
+        */
         /* Here the canny edge would be executed only on all the cores of cluster*/
         printf("Canny Edge Detector running on %d cores, Source %s image[W=%d, H=%d]\n", gap_ncore(), ISRGB?"RGB":"Mono", W, H);
         ActiveCore = gap_ncore();
@@ -654,27 +656,101 @@ static void cluster_main()
         ImgOutL2 = ImageOut_L2; ImgInL2 = ImageIn_L2;
         // Start Canny Edge Detector on core 0, that will dispatch the algorithm to the other cores.
         MasterCannyDetector(W, H);
-    }
+    //}
     // Stop the clock for performance usage.
     pi_perf_stop();
+
 }
 
 void canny_edge_detector()
 {
     printf ("Start of application\n");
 
-#if FROM_FILE
+//#if FROM_FILE
 
     while (1){
         
+    #if FROM_FILE    
+        // ****************
+        // Camera 0
+        // ****************
+
+        char imageName_in_0[64];
+        sprintf(imageName_in_0, "../../../dataset/%ld.pgm", idx);
         
-        char imageName[64];
-        sprintf(imageName, "../../../dataset/%ld.pgm", idx);
         ImageIn_L2 = (unsigned char *) pi_l2_malloc( COL*LINE*sizeof(unsigned char));
 
-        if (ReadImageFromFile(imageName, COL,LINE, 1, ImageIn_L2, LINE*COL*sizeof(unsigned char), 0, 0))
+        if (ReadImageFromFile(imageName_in_0, COL,LINE, 1, ImageIn_L2, LINE*COL*sizeof(unsigned char), 0, 0))
         {
-            printf("Failed to load image %s\n", imageName);
+            printf("Failed to load image %s\n", imageName_in_0);
+            pmsis_exit(-1);
+        }
+        
+
+    #endif
+
+        // Activate the Cluster
+        struct pi_device cluster_dev_0;
+        struct pi_cluster_conf cl_conf_0;
+        cl_conf_0.id = 0;
+        
+        pi_open_from_conf(&cluster_dev_0, (void *) &cl_conf_0);
+        
+        
+        if (pi_cluster_open(&cluster_dev_0))
+        {
+            printf("Cluster open failed cam 0 !\n");
+            pmsis_exit(-1);
+        }
+
+        // try using for malloc2
+        // Allocate a big buffer in L1 for the algorithm usage.
+        WorkingArea 	  = pi_l1_malloc(0, ALLOCATED_MEM) ;
+        
+        if(WorkingArea == NULL) {
+            printf("WorkingArea alloc error\n");
+            pmsis_exit(-1);
+        }
+
+        // Allocate the buffer for the output image.
+        ImageOut_L2 = pi_l2_malloc((LINE*COL));
+
+        printf ("Call cluster\n");
+        struct pi_cluster_task *task_0 = pmsis_l2_malloc(sizeof(struct pi_cluster_task));
+        memset(task_0, 0, sizeof(struct pi_cluster_task));
+        
+        task_0->entry = cluster_main;
+        
+        task_0->arg = (void *) NULL;
+        
+        task_0->stack_size = (uint32_t) STACK_SIZE;
+
+        //Synchronous call to Cluster, Execution will start only on PE0
+        pi_cluster_send_task_to_cl(&cluster_dev_0, task_0);
+
+        char imgName_out_0[50];
+        sprintf(imgName_out_0, "../../../img_OUT_cam0_%ld.ppm", idx);
+        printf("imgName_out_0: %s\n", imgName_out_0);
+        WriteImageToFile(imgName_out_0, COL, LINE, 1, (ImageOut_L2), sizeof(unsigned char));
+
+        pi_cluster_close(&cluster_dev_0);
+
+        // updating idx
+        ++idx;
+
+        // **********************
+        // camera 1
+        // **********************
+
+    #if FROM_FILE
+
+        char imageName_in_1[64];
+        sprintf(imageName_in_1, "../../../dataset/%ld.pgm", idx);
+        ImageIn_L2 = (unsigned char *) pi_l2_malloc( COL*LINE*sizeof(unsigned char));
+
+        if (ReadImageFromFile(imageName_in_1, COL,LINE, 1, ImageIn_L2, LINE*COL*sizeof(unsigned char), 0, 0))
+        {
+            printf("Failed to load image %s\n", imageName_in_1);
             pmsis_exit(-1);
         }
         
@@ -685,16 +761,20 @@ void canny_edge_detector()
         struct pi_device cluster_dev;
         struct pi_cluster_conf cl_conf;
         cl_conf.id = 0;
+        
         pi_open_from_conf(&cluster_dev, (void *) &cl_conf);
+        
+        
         if (pi_cluster_open(&cluster_dev))
         {
-            printf("Cluster open failed !\n");
+            printf("Cluster open failed for camera 1 !\n");
             pmsis_exit(-1);
         }
 
         // try using for malloc2
         // Allocate a big buffer in L1 for the algorithm usage.
         WorkingArea 	  = pi_l1_malloc(0, ALLOCATED_MEM) ;
+        
         if(WorkingArea == NULL) {
             printf("WorkingArea alloc error\n");
             pmsis_exit(-1);
@@ -706,21 +786,25 @@ void canny_edge_detector()
         printf ("Call cluster\n");
         struct pi_cluster_task *task = pmsis_l2_malloc(sizeof(struct pi_cluster_task));
         memset(task, 0, sizeof(struct pi_cluster_task));
+        
         task->entry = cluster_main;
+        
         task->arg = (void *) NULL;
+        
         task->stack_size = (uint32_t) STACK_SIZE;
 
         //Synchronous call to Cluster, Execution will start only on PE0
         pi_cluster_send_task_to_cl(&cluster_dev, task);
 
-        char imgName[50];
-        sprintf(imgName, "../../../img_OUT_%ld.ppm", idx);
-        printf("imgName: %s\n", imgName);
-        WriteImageToFile(imgName, COL, LINE, 1, (ImageOut_L2), sizeof(unsigned char));
+        char imgName_out_1[50];
+        sprintf(imgName_out_1, "../../../img_OUT_cam1_%ld.ppm", idx);
+        printf("imgName: %s\n", imgName_out_1);
+        WriteImageToFile(imgName_out_1, COL, LINE, 1, (ImageOut_L2), sizeof(unsigned char));
 
         pi_cluster_close(&cluster_dev);
+        
+        // updating idx
         idx++;
-        //imgNum = imgNum + 1;
     }  
     pmsis_exit(0);
  
