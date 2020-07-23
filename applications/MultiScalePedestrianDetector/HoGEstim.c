@@ -36,6 +36,8 @@
 #define LCD_OFF_X 40
 #define LCD_OFF_Y 10
 
+static uint32_t idx = 0;
+
 #if HOG_ESTIM_TREE_DEPTH==1
 #ifdef HOG_ESTIM_TD1
 #include "ModelTreeTer1_1.def"
@@ -430,63 +432,64 @@ void cluster_main(ArgCluster_T* arg){
   		#endif
 }
 
-int main()
-{
+void main_helper (){
 	// char *ImageName = "ValveBW.ppm";
-	// char *ImageName = "ValveBW_QVGA.ppm";
-	//char *ImageName = "../../../Pedestrian.ppm";
-	//char *ImageName = "../../../Pedestrian_324.pgm";
+		// char *ImageName = "ValveBW_QVGA.ppm";
+		//char *ImageName = "../../../Pedestrian.ppm";
+		//char *ImageName = "../../../Pedestrian_324.pgm";
 
-	char *Imagefile = "img_OUT5.pgm";
-	char imageName[64];
-	sprintf(imageName, "../../../testImages/GWT_dataset/%s", Imagefile);
+		//char *Imagefile = "img_OUT5.pgm";
+		
+		
+		char imageName[64];
+		sprintf(imageName, "../../../testImages/GWT_dataset/img_OUT%ld.pgm", idx);
 
-	ArgCluster_T clusterArg;
+		ArgCluster_T clusterArg;
 
-	unsigned int MaxUpScale = 2;
-	unsigned int W_real = 324, H_real = 244;
-	unsigned int W = 322, H = 242;
+		unsigned int MaxUpScale = 2;
+		unsigned int W_real = 324, H_real = 244;
+		unsigned int W = 322, H = 242;
 
-	unsigned int MaxW = (W) + MaxUpScale*(W)/HOG_ESTIM_SCALE_FACTOR;
-	unsigned int MaxH = (H) + MaxUpScale*(H)/HOG_ESTIM_SCALE_FACTOR;
-	unsigned int MaxW_real = (W_real) + MaxUpScale*(W_real)/HOG_ESTIM_SCALE_FACTOR;
-	unsigned int MaxH_real = (H_real) + MaxUpScale*(H_real)/HOG_ESTIM_SCALE_FACTOR;
+		unsigned int MaxW = (W) + MaxUpScale*(W)/HOG_ESTIM_SCALE_FACTOR;
+		unsigned int MaxH = (H) + MaxUpScale*(H)/HOG_ESTIM_SCALE_FACTOR;
+		unsigned int MaxW_real = (W_real) + MaxUpScale*(W_real)/HOG_ESTIM_SCALE_FACTOR;
+		unsigned int MaxH_real = (H_real) + MaxUpScale*(H_real)/HOG_ESTIM_SCALE_FACTOR;
 
-    unsigned int BlockW = 1+((((MaxW-2)/HOG_CELL_SIZE) - HOG_BLOCK_SIZE)/HOG_BLOCK_CELL_STRIDE);   // Number of blocks in a line
-    unsigned int BlockH = 1+((((MaxH-2)/HOG_CELL_SIZE) - HOG_BLOCK_SIZE)/HOG_BLOCK_CELL_STRIDE);   // Number of blocks in a row
-	unsigned int EstiW  = 1+(((HOG_ESTIM_WIDTH)/HOG_CELL_SIZE - HOG_BLOCK_SIZE)/(HOG_BLOCK_SIZE - HOG_BLOCK_OVERLAP));
-	unsigned int EstiH  = 1+(((HOG_ESTIM_HEIGHT)/HOG_CELL_SIZE - HOG_BLOCK_SIZE)/(HOG_BLOCK_SIZE - HOG_BLOCK_OVERLAP));
+		unsigned int BlockW = 1+((((MaxW-2)/HOG_CELL_SIZE) - HOG_BLOCK_SIZE)/HOG_BLOCK_CELL_STRIDE);   // Number of blocks in a line
+		unsigned int BlockH = 1+((((MaxH-2)/HOG_CELL_SIZE) - HOG_BLOCK_SIZE)/HOG_BLOCK_CELL_STRIDE);   // Number of blocks in a row
+		unsigned int EstiW  = 1+(((HOG_ESTIM_WIDTH)/HOG_CELL_SIZE - HOG_BLOCK_SIZE)/(HOG_BLOCK_SIZE - HOG_BLOCK_OVERLAP));
+		unsigned int EstiH  = 1+(((HOG_ESTIM_HEIGHT)/HOG_CELL_SIZE - HOG_BLOCK_SIZE)/(HOG_BLOCK_SIZE - HOG_BLOCK_OVERLAP));
 
-	unsigned int HOGFeatSize = BlockW*BlockH*HOG_NBINS*HOG_BLOCK_SIZE*HOG_BLOCK_SIZE*sizeof(unsigned short);
-	unsigned int ImgSize     = MaxW*MaxH*sizeof(unsigned char);
-	unsigned int ImgSize_real     = MaxH_real*MaxW_real*sizeof(unsigned char);
-	//unsigned int AllocSize = Max(ImgSize, HOGFeatSize);
-	unsigned int AllocSize = Max(ImgSize_real, HOGFeatSize);
+		unsigned int HOGFeatSize = BlockW*BlockH*HOG_NBINS*HOG_BLOCK_SIZE*HOG_BLOCK_SIZE*sizeof(unsigned short);
+		unsigned int ImgSize     = MaxW*MaxH*sizeof(unsigned char);
+		unsigned int ImgSize_real     = MaxH_real*MaxW_real*sizeof(unsigned char);
+		//unsigned int AllocSize = Max(ImgSize, HOGFeatSize);
+		unsigned int AllocSize = Max(ImgSize_real, HOGFeatSize);
 
-	TotalCycles = 0; TotalHOGCycles = 0;
-	TotalResizeCycles = 0; TotalEstimCycles = 0;
+		TotalCycles = 0; TotalHOGCycles = 0;
+		TotalResizeCycles = 0; TotalEstimCycles = 0;
 
-	//Allocating Events
-	if (rt_event_alloc(NULL, 8)) return -1;
-	//Setting FC to 250MhZ
-	rt_freq_set(RT_FREQ_DOMAIN_FC, 250000000);
+		//Allocating Events
+		if (rt_event_alloc(NULL, 8)) return -1;
+		//Setting FC to 250MhZ
+		rt_freq_set(RT_FREQ_DOMAIN_FC, 250000000);
 
-	image16 	= (unsigned short *) rt_alloc(RT_ALLOC_L2_CL_DATA, (322/2)*(242/2)*sizeof(unsigned short));
-	ImageIn     = (unsigned char *)  rt_alloc(RT_ALLOC_L2_CL_DATA,ImgSize_real);
-	HoGFeatures = (unsigned short *) rt_alloc(RT_ALLOC_L2_CL_DATA,HOGFeatSize);
-	ImageIn1    = (unsigned char *)  rt_alloc(RT_ALLOC_L2_CL_DATA,ImgSize);
+		image16 	= (unsigned short *) rt_alloc(RT_ALLOC_L2_CL_DATA, (322/2)*(242/2)*sizeof(unsigned short));
+		ImageIn     = (unsigned char *)  rt_alloc(RT_ALLOC_L2_CL_DATA,ImgSize_real);
+		HoGFeatures = (unsigned short *) rt_alloc(RT_ALLOC_L2_CL_DATA,HOGFeatSize);
+		ImageIn1    = (unsigned char *)  rt_alloc(RT_ALLOC_L2_CL_DATA,ImgSize);
 
 
-	if (ImageIn==0 || HoGFeatures==0 || ImageIn1==0) {
+		if (ImageIn==0 || HoGFeatures==0 || ImageIn1==0) {
 		printf("Failed to allocate Memory for Image (%d bytes) or HoGFeatures (%d bytes) or Image clone (%d bytes)\n",
 			ImgSize, HOGFeatSize, ImgSize);
 		return 1;
-	}
+		}
 
 
-#if FROM_FILE
+		#if FROM_FILE
 
-	{
+		{
 
 		unsigned int Wi, Hi;
 		if ((ReadImageFromFile(imageName, &Wi, &Hi, ImageIn, AllocSize)==0) || (Wi!=W) || (Hi!=H))
@@ -495,111 +498,124 @@ int main()
 			printf("Failed to load image %s or dimension mismatch Expects [%dx%d], Got [%dx%d]\n", imageName, W, H, Wi, Hi);
 			return 1;
 		}
-	}
+		}
 
-#else
+		#else
 
 
-	//Init SPI and ili9341 LCD screen
-	rt_spim_t *spim = init_spi_lcd();
-	ILI9341_begin(spim);
-	setRotation(spim,2);
+		//Init SPI and ili9341 LCD screen
+		rt_spim_t *spim = init_spi_lcd();
+		ILI9341_begin(spim);
+		setRotation(spim,2);
 
-	cam_param_conf(&cam1_conf);
-	camera1 = rt_camera_open("camera", &cam1_conf, 0);
-	if (camera1 == NULL) return -1;
+		cam_param_conf(&cam1_conf);
+		camera1 = rt_camera_open("camera", &cam1_conf, 0);
+		if (camera1 == NULL) return -1;
 
-    //Init Camera Interface
-    rt_cam_control(camera1, CMD_INIT, 0);
-    rt_time_wait_us(1000000); //Wait camera calibration
+		//Init Camera Interface
+		rt_cam_control(camera1, CMD_INIT, 0);
+		rt_time_wait_us(1000000); //Wait camera calibration
 
-#endif
+		#endif
 
-	rt_cluster_mount(MOUNT, CID, 0, NULL);
-	//Setting Cluster freq to 175MHz
-	rt_freq_set(RT_FREQ_DOMAIN_FC, 175000000);
+		rt_cluster_mount(MOUNT, CID, 0, NULL);
+		//Setting Cluster freq to 175MHz
+		rt_freq_set(RT_FREQ_DOMAIN_FC, 175000000);
 
-	if (AllocateBBList(HOG_ESTIM_MAX_BB))
-	{
+		if (AllocateBBList(HOG_ESTIM_MAX_BB))
+		{
 		printf("Failed to allocate BB List\n"); return 1;
-	}
+		}
 
-	HOG_L1_Memory = (char *) rt_alloc(RT_ALLOC_CL_DATA,_HOG_L1_Memory_SIZE);
-	if (HOG_L1_Memory == 0) { printf("Failed to allocate %d bytes for L1_memory\n", _HOG_L1_Memory_SIZE); return 1; }
-	WeakEstimModel = (HoGWeakPredictorBis_T *) rt_alloc(RT_ALLOC_CL_DATA,sizeof(Model));
-	if (WeakEstimModel == 0) { printf("Failed to allocate %d bytes for Estimation Model\n", sizeof(Model)); return 1; }
+		HOG_L1_Memory = (char *) rt_alloc(RT_ALLOC_CL_DATA,_HOG_L1_Memory_SIZE);
+		if (HOG_L1_Memory == 0) { printf("Failed to allocate %d bytes for L1_memory\n", _HOG_L1_Memory_SIZE); return 1; }
+		WeakEstimModel = (HoGWeakPredictorBis_T *) rt_alloc(RT_ALLOC_CL_DATA,sizeof(Model));
+		if (WeakEstimModel == 0) { printf("Failed to allocate %d bytes for Estimation Model\n", sizeof(Model)); return 1; }
 
 
-	void *stacks = rt_alloc(RT_ALLOC_CL_DATA, STACK_SIZE*rt_nb_pe());
-	if (stacks == NULL) return -1;
+		void *stacks = rt_alloc(RT_ALLOC_CL_DATA, STACK_SIZE*rt_nb_pe());
+		if (stacks == NULL) return -1;
 
-	clusterArg.W = W;
-	clusterArg.H = H;
-	clusterArg.W_real = W_real;
-	clusterArg.H_real = H_real;
+		clusterArg.W = W;
+		clusterArg.H = H;
+		clusterArg.W_real = W_real;
+		clusterArg.H_real = H_real;
 
-	//Setting GPIO for Measurements
-	gap8SetOnePadAlternate(PLP_PAD_TIMER0_CH0, PLP_PAD_GPIO_ALTERNATE1);
-    gap8SetGPIODir(gap8GiveGpioNb(PLP_PAD_TIMER0_CH0), GPIO_DIR_OUT);
+		//Setting GPIO for Measurements
+		gap8SetOnePadAlternate(PLP_PAD_TIMER0_CH0, PLP_PAD_GPIO_ALTERNATE1);
+		gap8SetGPIODir(gap8GiveGpioNb(PLP_PAD_TIMER0_CH0), GPIO_DIR_OUT);
 
-	#if !FROM_FILE
-	//Configuring Camera Registers
-	himaxRegWrite(camera1,0x1003, 0x00);             //  Black level target
+		#if !FROM_FILE
+		//Configuring Camera Registers
+		himaxRegWrite(camera1,0x1003, 0x00);             //  Black level target
 
-    himaxRegWrite(camera1,AE_TARGET_MEAN, 0xAC);      //AE target mean [Def: 0x3C]
-    himaxRegWrite(camera1,AE_MIN_MEAN,    0x0A);      //AE min target mean [Def: 0x0A]
-    himaxRegWrite(camera1,INTEGRATION_H,  0x87);      //Integration H [Def: 0x01]
-    himaxRegWrite(camera1,INTEGRATION_L,  0x08);      //Integration L [Def: 0x08]
-    himaxRegWrite(camera1,ANALOG_GAIN,    0x00);      //Analog Global Gain
-    himaxRegWrite(camera1,DAMPING_FACTOR, 0x20);      //Damping Factor [Def: 0x20]
-    himaxRegWrite(camera1,DIGITAL_GAIN_H, 0x01);      //Digital Gain High [Def: 0x01]
-    himaxRegWrite(camera1,DIGITAL_GAIN_L, 0x00);      //Digital Gain Low [Def: 0x00]
+		himaxRegWrite(camera1,AE_TARGET_MEAN, 0xAC);      //AE target mean [Def: 0x3C]
+		himaxRegWrite(camera1,AE_MIN_MEAN,    0x0A);      //AE min target mean [Def: 0x0A]
+		himaxRegWrite(camera1,INTEGRATION_H,  0x87);      //Integration H [Def: 0x01]
+		himaxRegWrite(camera1,INTEGRATION_L,  0x08);      //Integration L [Def: 0x08]
+		himaxRegWrite(camera1,ANALOG_GAIN,    0x00);      //Analog Global Gain
+		himaxRegWrite(camera1,DAMPING_FACTOR, 0x20);      //Damping Factor [Def: 0x20]
+		himaxRegWrite(camera1,DIGITAL_GAIN_H, 0x01);      //Digital Gain High [Def: 0x01]
+		himaxRegWrite(camera1,DIGITAL_GAIN_L, 0x00);      //Digital Gain Low [Def: 0x00]
+		
+		while(1){
+		//Enable Camera Interface
+		rt_cam_control(camera1, CMD_START, 0);
+		// Get an event from the free list, which can then be used for a blocking wait using rt_event_wait.
+		rt_event_t *event_0 = rt_event_get_blocking(NULL);
+		// Programme the camera capture job to udma
+		rt_camera_capture (camera1, ImageIn, W_real*H_real, event_0);
+		// Start to receive the frame.
+		// Wait until the capture finished
+		rt_event_wait(event_0);
+		// Stop the camera, camera interface is clock gated.
+		rt_cam_control(camera1, CMD_PAUSE, 0);
 
-	while(1){
-        //Enable Camera Interface
-        rt_cam_control(camera1, CMD_START, 0);
-        // Get an event from the free list, which can then be used for a blocking wait using rt_event_wait.
-        rt_event_t *event_0 = rt_event_get_blocking(NULL);
-        // Programme the camera capture job to udma
-        rt_camera_capture (camera1, ImageIn, W_real*H_real, event_0);
-        // Start to receive the frame.
-        // Wait until the capture finished
-        rt_event_wait(event_0);
-        // Stop the camera, camera interface is clock gated.
-        rt_cam_control(camera1, CMD_PAUSE, 0);
-
-	#endif
-  		gap8WriteGPIO(gap8GiveGpioNb(PLP_PAD_TIMER0_CH0), 0x1);
+		#endif
+		gap8WriteGPIO(gap8GiveGpioNb(PLP_PAD_TIMER0_CH0), 0x1);
 		rt_cluster_call(NULL, CID, (void (*)(void *))  cluster_main, &clusterArg, stacks, STACK_SIZE, STACK_SIZE, rt_nb_pe(), NULL);
 		gap8WriteGPIO(gap8GiveGpioNb(PLP_PAD_TIMER0_CH0), 0x0);
 
-	#if !FROM_FILE
+		#if !FROM_FILE
 		//Send image to ili9341 LCD
 		lcd_pushPixels(spim, LCD_OFF_X, LCD_OFF_Y, W/2,H/2, image16);
-	}
+		}
+		
+		#else
+		#if SAVE_IMAGE
+		char imgName_out[50];
+        sprintf(imgName_out, "../../../img_OUT_%ld.ppm", idx);
+        printf("imgName: %s\n", imgName_out);
 
-	#else
-	#if SAVE_IMAGE
-		sprintf(imageName, "../../../%s", Imagefile);
-    	printf("imgName: %s\n", imageName);
-    	WriteImageToFile(imageName,W,H,(ImageIn));
-	#endif
-	#endif
+		WriteImageToFile(imgName_out,W,H,(ImageIn));
+		#endif
+		#endif
 
-	rt_cluster_mount(UNMOUNT, CID, 0, NULL);
+		rt_cluster_mount(UNMOUNT, CID, 0, NULL);
 
-#if FROM_FILE
-	#if VERBOSE
+		#if FROM_FILE
+		#if VERBOSE
 		printf("\n\nHOG Pyramid Features extraction and estimation done.\n\n");
 		printf("\tInput Image: [%d, %d], 7 scales in total. Upscale: [2, step 1/%d], Downscale: [3, Step: -1/%d]\n", W, H,HOG_ESTIM_SCALE_FACTOR,HOG_ESTIM_SCALE_FACTOR);
 		printf("\tTotal Resize cycles                 : %d\n", TotalResizeCycles);
 		printf("\tTotal HOG Features extraction cycles: %d\n", TotalHOGCycles);
 		printf("\tTotal Weak boost estimation cycles  : %d\n", TotalEstimCycles);
 		printf("\n");
-	#endif
-	printf("\tGrand Total cycles                  : %d\n", TotalCycles);
-#endif
+		#endif
+		printf("\tGrand Total cycles                  : %d\n", TotalCycles);
+		#endif
 
+		// incrementaing idx
+		++idx;
+}
+
+
+int main()
+{
+		
+	while (1){
+		main_helper();
+	}
 
 	return 0;
 }
